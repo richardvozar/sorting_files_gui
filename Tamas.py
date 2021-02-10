@@ -3,80 +3,161 @@ import shutil
 import easygui
 import tkinter
 from tkinter import simpledialog
-
-
-
-
-
-# a mappak eleresi utvonala, ahova akarod szortirozni a fajlokat
-# neked linuxon nyilvan a / slash jel kell es egy eleg belole
-# csak hozza kell irni egy ujat, ha hozza akarsz adni
-# es az action-be is bele kell irni a minta szerint
-
-dir_pdf = "C:\\Users\\Svab\\Desktop\\teszt\\pdf"
-dir_jpg = "C:\\Users\\Svab\\Desktop\\teszt\\jpg"
-dir_png = "C:\\Users\\Svab\\Desktop\\teszt\\png"
-dir_egyeb = "C:\\Users\\Svab\\Desktop\\teszt\\egyeb"
-
-
-
-# ez az algoritmushoz kell, nem piszka!
-def moveto(dst):
-    return lambda src: shutil.move(src, dst)
-
-
-# ide kell majd hozzairni a minta szerint amit meg akarsz
-# pl ha .torrent fajlokat szortirozzon, akkor
-# 'torrent': moveto(dir_torrent),
-# ha bizonyos kiterjesztesu fileokat torolni szeretnel, vedd mi a # jelet
-
-action = {
-    'pdf': moveto(dir_pdf),
-    'jpg': moveto(dir_jpg),
-    'png': moveto(dir_png),
-    #'py': os.remove,
-}
-
-
-
-# ez a gyokermappa amiben a fajlokat szeretnenk szortirozni
-src_dir = "C:\\Users\\Svab\\Desktop\\teszt"
-
-
-# algoritmus
-for file in os.listdir(src_dir):
-    ext = os.path.splitext(file)[1][1:]
-    
-    # ha a kiterjesztes szerepel az action libraryben
-    if ext in action:
-        action[ext](os.path.join(src_dir, file))
-
-    # ha a kiterjesztes ismeretlen, beletesszuk a dir_egyeb mappaba
-    elif ext not in action and ext != "":
-        shutil.move(src_dir+"\\"+file, dir_egyeb)
-
-    # ha nincs kiterjesztes/mappa, csak megy a kovetkezore
-    else:
-        continue
+import datetime
 
 
 # lista a kiterjesztesekrol
 ext_added = ["jpg", "png", "pdf", "torrent"]
 
-def go_sort():
-    ############# TO DO ####################
-    # 1. mappak letrehozasa                #
-    # 2. fajlok belepakolasa a mappakba    #
-    # 3. log fajl keszitese                #
-    ########################################
 
-    # path: source_path
-    # kiterjesztesek: ext_added
+def moving_to(file, ext, src):
+    linux = False
+    if src[0] == '/':
+        linux = True
 
-    # kellene egy checkbutton, hogy a maradek filet hagyjuk ugy,
-    # vagy beletegyuk egy egyeb mappaba
+    if linux:
+        shutil.move(src+'/'+file, src+'/'+ext+'/'+file)
+    else:
+        shutil.move(src+'\\'+file, src+'\\'+ext+'\\'+file)
+
+
+
+
+# ez csinalja a szortirozast
+def szortirozas_metodus1():
+    global source_path
+    print("szortirozas_metodus1")
+    os.chdir(source_path)
+    cwd = os.getcwd()
+
+    if ext_added:
+        for dic_ext in ext_added:
+            try:
+                os.mkdir(dic_ext)
+            except:
+                continue
+
+    linux = False
+    if source_path[0] == '/':
+        linux = True
+
+    if linux:
+        try:
+            f = open(cwd+"/szortir_log.txt", "a")
+        except:
+            print("Letezik a fajl")
+    else:
+        try:
+            f = open(cwd+"\\szortir_log.txt", "a")
+        except:
+            print("Letezik a fajl")
+
+    date_append = str(datetime.datetime.now())
     
-    return
+    f.write(date_append + '_________\n')
+    
+    for file in os.listdir(source_path):
+        ext = os.path.splitext(file)[1][1:]
+        print(file)
+        if file == "szortir_log.txt":
+            continue
+        elif ext in ext_added:
+            moving_to(file, ext, cwd)
+            f.write(file+" --> "+ext+"\n")
+        else:
+            continue
+    f.write(3*'\n')
+    f.close()
+    print("f1 bezarasa")
+
+
+
+# meg ez
+def szortirozas_metodus2():
+    global source_path
+    print("szortirozas_metodus2")
+    os.chdir(source_path)
+    cwd = os.getcwd()
+
+    if ext_added:
+        for dic_ext in ext_added:
+            try:
+                os.mkdir(dic_ext)
+            except:
+                continue
+        
+    try:
+        os.mkdir("Egyeb")
+    except:
+        os.mkdir("Egyeb3123jlk3948")
+
+    linux = False
+    if source_path[0] == '/':
+        linux = True
+
+    if linux:
+        try:
+            f = open(cwd+"/szortir_log.txt", "a")
+        except:
+            print("Letezik a fajl")
+    else:
+        try:
+            f = open(cwd+"\\szortir_log.txt", "a")
+        except:
+            print("Letezik a fajl")
+
+    date_append = str(datetime.datetime.now())
+    
+    f.write(date_append + '_________\n')
+    
+    for file in os.listdir(source_path):
+        print(file)
+        ext = os.path.splitext(file)[1][1:]
+        if file == "szortir_log.txt":
+            continue
+        elif ext in ext_added:
+            moving_to(file, ext, cwd)
+            f.write(file+" --> "+ext+"\n")
+        elif ext not in ext_added and ext != '':
+            moving_to(file, "Egyeb", cwd)
+            f.write(file+" --> Egyeb\n")
+        else:
+            continue
+
+    f.write(3*'\n')
+    f.close()
+    print("f2 bezarasa")
+    
+
+def open_log():
+    try:
+        os.startfile("szortir_log.txt")
+    except:
+        print("wut")
+
+
+def destroying_everything():
+    wd = tkinter.Tk()
+    wd.geometry("300x120")
+
+    tkinter.Label(wd, text="Keszitettem egy logot a szortirozott fajlokrol...\nMegnyitod?").pack()
+    tkinter.Button(wd, text="Megnyitas", command=open_log).pack()
+    tkinter.Button(wd, text="Program bezarasa", command=wd.destroy).pack()
+
+
+def go_sort():
+    global wd, szortir, szortir_gomb, listbox_label, ext_list, egyeb_szoveg, legyen_egyeb_mappa_var, egyeb_cb
+    
+    print(legyen_egyeb_mappa_var.get())
+
+    wd.destroy()
+    destroying_everything()
+    
+    if legyen_egyeb_mappa_var.get():
+        szortirozas_metodus2()
+    else:
+        szortirozas_metodus1()
+
 
 def ext_eltavolitas():
     global wd, szortir, szortir_gomb, listbox_label, ext_list
@@ -95,28 +176,35 @@ def ext_hozzaadas():
     ext_listazas()
 
 def utvonal_done2():
-    global wd, szortir, szortir_gomb, listbox_label, ext_list
+    global wd, szortir, szortir_gomb, listbox_label, ext_list, egyeb_szoveg, legyen_egyeb_mappa_var, egyeb_cb, remove_btn, add_btn, go_sort_btn
 
     ext_listazas()
-
+    
     add_btn = tkinter.Button(wd, text="Hozzaad", command=ext_hozzaadas)
-    add_btn.grid(row=4, column=1)
+    add_btn.grid(row=4, column=1, sticky="W")
     remove_btn = tkinter.Button(wd, text="Eltavolit", command=ext_eltavolitas)
-    remove_btn.grid(row=4, column=2)
+    remove_btn.grid(row=4, column=1, sticky="E")
 
+    egyeb_szoveg = tkinter.Label(wd, text="\nA nem hozzaadott kiterjesztesu fajlokat\n beletegyem egy kulon Egyeb mappaba,\nvagy hagyjam a helyukon?")
+    egyeb_szoveg.grid(row=5, column=1)
+    legyen_egyeb_mappa_var = tkinter.IntVar()
+    egyeb_cb = tkinter.Checkbutton(wd, text="Csinaljam?", variable=legyen_egyeb_mappa_var)
+    egyeb_cb.grid(row=6, column=1)
+    
     go_sort_btn = tkinter.Button(wd, text="Mehet", bg="lightblue", fg="red", command=go_sort)
-    go_sort_btn.grid(row=5, column=1)
+    go_sort_btn.grid(row=7, column=1)
 
 
 def utvonal_done():
-    global wd, source_path, kiiras, biztos, biztos1, biztos2, szortir, szortir_gomb
+    global wd, source_path, kiiras, biztos, biztos1, biztos2, szortir, szortir_gomb, szoveg1
     kiiras.destroy()
     biztos.destroy()
     biztos1.destroy()
     biztos2.destroy()
     szortir.destroy()
     szortir_gomb.destroy()
-    tkinter.Label(wd, text="Ezt a mappat fogom szortirozni:\n{}".format(source_path)).grid(row=1, column=1)
+    szoveg1 = tkinter.Label(wd, text="Ezt a mappat fogom szortirozni:\n{}".format(source_path))
+    szoveg1.grid(row=1, column=1)
     utvonal_done2()
 
 
@@ -154,7 +242,7 @@ def ext_listazas():
 
     listbox_label = tkinter.Label(wd, text="Ezeket a kiterjeszteseket szortirozom mappakba:", fg="blue")
     listbox_label.grid(row=2, column=1)
-    ext_list = tkinter.Listbox(wd)
+    ext_list = tkinter.Listbox(wd, width=43, height=15)
     ext_list.grid(row=3, column=1)
     
     ext_added.sort()
